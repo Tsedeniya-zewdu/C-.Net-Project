@@ -15,5 +15,6 @@ namespace api.interfaces
         Task<Stoke> CreateAsync(Stoke stokeModel);
         Task<Stoke?> UpdateAsync(int id,UpdateStokeRequestDto stokezdto);
         Task<Stoke?> DeleteAsync(int id);
+        Task<bool>StokeExists(int id);
     }
 }

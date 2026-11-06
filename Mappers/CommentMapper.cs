@@ -18,5 +18,26 @@ namespace api.Mappers
                 StokeId = CommentModel.StokeId
             };
         }
+         public static Comment ToCommentFromCreate(this CreateCommentDto commentDto, int stokeId)
+        {
+            return new Comment
+            {
+                
+                Title = commentDto.Title,
+                Content = commentDto.Content,
+              
+                StokeId = stokeId
+            };
+        }
+         public static Comment ToCommentFromUpate(this UpdateCommentRequestDto commentDto)
+        {
+            return new Comment
+            {
+                
+                Title = commentDto.Title,
+                Content = commentDto.Content,
+              
+            };
+        }
     }
 }

@@ -32,13 +32,13 @@ namespace api.Repository
         // GET ALL
         public async Task<List<Stoke>> GetAllAsync()
         {
-            return await _context.Stoke.ToListAsync();
+            return await _context.Stoke.Include(c=>c.Comments).ToListAsync();
         }
 
         // GET BY ID
         public async Task<Stoke?> GetByIdAsync(int id)
         {
-            return await _context.Stoke.FindAsync(id);
+            return await _context.Stoke.Include(c=>c.Comments).FirstOrDefaultAsync(i=> i.StokeId == id);
         }
 
         // UPDATE
@@ -81,6 +81,11 @@ namespace api.Repository
             await _context.SaveChangesAsync();
 
             return stoke;
+        }
+
+        public Task<bool> StokeExists(int id)
+        {
+           return _context.Stoke.AnyAsync(i=>i.StokeId==id);
         }
     }
 }

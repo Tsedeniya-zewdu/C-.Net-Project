@@ -20,7 +20,8 @@ namespace api.Mappers
   Purchase=stokemodel.Purchase,
   LastDiv=stokemodel.LastDiv,
   Industry=stokemodel.Industry,
-  MarketCap=stokemodel.MarketCap
+  MarketCap=stokemodel.MarketCap,
+  Comments=stokemodel.Comments.Select(c=> c.ToCommentDto()).ToList()
             };
         }
        public static Stoke ToStokeFromCreateDto(
@@ -33,7 +34,8 @@ namespace api.Mappers
         Purchase = createDto.Purchase,
         LastDiv = createDto.LastDiv,
         Industry = createDto.Industry,
-        MarketCap = createDto.MarketCap
+        MarketCap = createDto.MarketCap,
+        
     };
 }
     }
