@@ -15,6 +15,7 @@ namespace api.Mappers
                 Title = CommentModel.Title,
                 Content = CommentModel.Content,
                 CreatedOn = CommentModel.CreatedOn,
+                 CreatedBy =CommentModel.AppUser.UserName,
                 StokeId = CommentModel.StokeId
             };
         }
@@ -25,7 +26,7 @@ namespace api.Mappers
                 
                 Title = commentDto.Title,
                 Content = commentDto.Content,
-              
+             
                 StokeId = stokeId
             };
         }

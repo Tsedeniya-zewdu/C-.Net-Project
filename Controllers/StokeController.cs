@@ -7,6 +7,8 @@ using api.Dtos.Stoke;
 using api.interfaces;
 using api.Mappers;
 using Microsoft.AspNetCore.Mvc;
+using api.Helpers;
+using Microsoft.AspNetCore.Authorization;
 
 namespace api.Controllers
 {
@@ -23,17 +25,18 @@ namespace api.Controllers
 
         // GET ALL
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        [Authorize]
+        public async Task<IActionResult> GetAll([FromQuery] QueryObjects query)
         {
-            var stokes = await _StokeRepo.GetAllAsync();
+            var stokes = await _StokeRepo.GetAllAsync(query);
 
-            var stokesDto = stokes.Select(s => s.ToStokeDto());
+            var stokesDto = stokes.Select(s => s.ToStokeDto()).ToList();
 
             return Ok(stokesDto);
         }
 
         // GET BY ID
-        [HttpGet("{stokeId}")]
+        [HttpGet("{stokeId:int}")]
         public async Task<IActionResult> GetById([FromRoute] int stokeId)
         {
             var stoke = await _StokeRepo.GetByIdAsync(stokeId);
@@ -51,6 +54,9 @@ namespace api.Controllers
         public async Task<IActionResult> Create(
             [FromBody] CreateStokerequestDto StokeDto)
         {
+            if (!ModelState.IsValid)
+      
+        return BadRequest(ModelState);
             var StokeModel = StokeDto.ToStokeFromCreateDto();
 
             await _StokeRepo.CreateAsync(StokeModel);
@@ -63,11 +69,14 @@ namespace api.Controllers
         }
 
         // UPDATE
-        [HttpPut("{id}")]
+        [HttpPut("{id:int}")]
         public async Task<IActionResult> Update(
             [FromRoute] int id,
             [FromBody] UpdateStokeRequestDto updateDto)
         {
+            if (!ModelState.IsValid)
+      
+        return BadRequest(ModelState);
             var stokeModel = await _StokeRepo.UpdateAsync(id, updateDto);
 
             if (stokeModel == null)
@@ -79,7 +88,7 @@ namespace api.Controllers
         }
 
         // DELETE
-        [HttpDelete("{id}")]
+        [HttpDelete("{id:int}")]
         public async Task<IActionResult> Delete([FromRoute] int id)
         {
             var stokeModel = await _StokeRepo.DeleteAsync(id);

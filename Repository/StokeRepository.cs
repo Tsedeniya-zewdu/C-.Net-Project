@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using api.Data;
 using api.Dtos.Stoke;
+using api.Helpers;
 using api.interfaces;
 using api.Models;
 using Microsoft.EntityFrameworkCore;
@@ -30,15 +31,46 @@ namespace api.Repository
         }
 
         // GET ALL
-        public async Task<List<Stoke>> GetAllAsync()
+        public async Task<List<Stoke>> GetAllAsync(QueryObjects query)
         {
-            return await _context.Stoke.Include(c=>c.Comments).ToListAsync();
+            var stokes = _context.Stoke
+                .Include(c => c.Comments).ThenInclude(a=>a.AppUser)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(query.Symbol))
+            {
+                stokes = stokes.Where(s =>
+                    s.Symbol.Contains(query.Symbol));
+            }
+
+            if (!string.IsNullOrWhiteSpace(query.CompanyName))
+            {
+                stokes = stokes.Where(s =>
+                    s.CompanyName.Contains(query.CompanyName));
+            }
+            if (!string.IsNullOrWhiteSpace(query.SortBy))
+            {
+                if (query.SortBy.Equals("Symbol", StringComparison.OrdinalIgnoreCase))
+                {
+                    stokes = query.IsAscending
+                        ? stokes.OrderBy(s => s.Symbol)
+                        : stokes.OrderByDescending(s => s.Symbol);
+                }
+                else if (query.SortBy.Equals("CompanyName", StringComparison.OrdinalIgnoreCase))
+                {
+                    stokes = query.IsAscending
+                        ? stokes.OrderBy(s => s.CompanyName)
+                        : stokes.OrderByDescending(s => s.CompanyName);
+                }
+            }
+          var skipNumber =(query.PageNumber -1) * query.PageSize; 
+            return await stokes.Skip(skipNumber).Take(query.PageSize).ToListAsync();
         }
 
         // GET BY ID
         public async Task<Stoke?> GetByIdAsync(int id)
         {
-            return await _context.Stoke.Include(c=>c.Comments).FirstOrDefaultAsync(i=> i.StokeId == id);
+            return await _context.Stoke.Include(c => c.Comments).FirstOrDefaultAsync(i => i.StokeId == id);
         }
 
         // UPDATE
@@ -55,7 +87,7 @@ namespace api.Repository
             }
 
             existingStoke.Symbol = stokeDto.Symbol;
-            existingStoke.CompanyNAme = stokeDto.CompanyNAme;
+            existingStoke.CompanyName = stokeDto.CompanyNAme;
             existingStoke.Purchase = stokeDto.Purchase;
             existingStoke.LastDiv = stokeDto.LastDiv;
             existingStoke.Industry = stokeDto.Industry;
@@ -85,7 +117,12 @@ namespace api.Repository
 
         public Task<bool> StokeExists(int id)
         {
-           return _context.Stoke.AnyAsync(i=>i.StokeId==id);
+            return _context.Stoke.AnyAsync(i => i.StokeId == id);
+        }
+
+        public async Task<Stoke?> GetBySymbolAsync(string symbol)
+        {
+            return await _context.Stoke.FirstOrDefaultAsync(s=> s.Symbol==symbol);
         }
     }
 }

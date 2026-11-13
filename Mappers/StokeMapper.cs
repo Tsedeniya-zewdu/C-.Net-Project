@@ -16,7 +16,7 @@ namespace api.Mappers
             {
                 StokeId = stokemodel.StokeId,
   Symbol=stokemodel.Symbol,
-  CompanyNAme=stokemodel.CompanyNAme,
+  CompanyNAme=stokemodel.CompanyName,
   Purchase=stokemodel.Purchase,
   LastDiv=stokemodel.LastDiv,
   Industry=stokemodel.Industry,
@@ -30,7 +30,7 @@ namespace api.Mappers
     return new Stoke
     {
         Symbol = createDto.Symbol,
-        CompanyNAme = createDto.CompanyNAme,
+        CompanyName = createDto.CompanyNAme,
         Purchase = createDto.Purchase,
         LastDiv = createDto.LastDiv,
         Industry = createDto.Industry,

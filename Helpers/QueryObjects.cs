@@ -1,0 +1,18 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace api.Helpers
+{
+    public class QueryObjects
+    {
+          public string? Symbol { get; set; } =null;
+       
+        public string? CompanyName { get; set; }=null;
+        public bool IsAscending{get; set;}=false;
+        public string? SortBy { get; set; }=null;
+        public int PageNumber { get; set; } =1;
+        public int PageSize { get; set; } =2;
+    }
+}

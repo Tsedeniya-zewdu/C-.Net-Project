@@ -4,8 +4,11 @@ using System.Linq;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
 using api.Dtos.Comment;
+using api.Extension;
 using api.interfaces;
 using api.Mappers;
+using api.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace api.Controllers
@@ -16,21 +19,26 @@ namespace api.Controllers
     {
         private readonly IcommentRepository _commentRepo;
          private readonly IStokeRepository _stokeRepo;
-      public CommentController(IcommentRepository commentRepo, IStokeRepository stokeRepo)
+         private readonly UserManager<AppUser> _userManager;
+      public CommentController(IcommentRepository commentRepo, IStokeRepository stokeRepo, UserManager<AppUser> userManager)
       {
         _commentRepo=commentRepo;
         _stokeRepo=stokeRepo;
+        _userManager=userManager;
       } 
       [HttpGet]
 
       public async Task<IActionResult> GetAll()
+
         {
+      
+      
             var comments = await _commentRepo.GetAllAsync();
             var commentDto = comments.Select(s=>s.ToCommentDto());
             return Ok(commentDto);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public async Task<IActionResult> GetById([FromRoute] int id)
     {
       var comment = await _commentRepo.GetByIdAsync(id);
@@ -40,14 +48,23 @@ namespace api.Controllers
       }
       return Ok(comment.ToCommentDto());
     }
-[HttpPost("{StokeId}")]
+[HttpPost("{StokeId:int}")]
 public async Task<IActionResult> Create([FromRoute] int StokeId,[FromBody] CreateCommentDto commentDto)
     {
+      if (!ModelState.IsValid)
+      
+        return BadRequest(ModelState);
       if(!await _stokeRepo.StokeExists(StokeId))
       {
         return BadRequest("stoke does not exist");
       }
+
+      var username = User.GetUserName();
+      var appUser = await _userManager.FindByNameAsync(username);
+  
+
       var commentModel =commentDto.ToCommentFromCreate(StokeId);
+      commentModel.AppUserId=appUser.Id;
       await _commentRepo.CreateAsync(commentModel);
        return CreatedAtAction(
                 nameof(GetById),
@@ -56,9 +73,12 @@ public async Task<IActionResult> Create([FromRoute] int StokeId,[FromBody] Creat
             );
     }
     [HttpPut]
-    [Route("{id}")]
+    [Route("{id:int}")]
     public async Task<IActionResult> UpdateComment([FromRoute] int id, UpdateCommentRequestDto updatedto)
     {
+      if (!ModelState.IsValid)
+      
+        return BadRequest(ModelState);
       var comment = await _commentRepo.UpdateAsync(id,updatedto.ToCommentFromUpate() );
       if (comment == null)
       {
@@ -67,7 +87,7 @@ public async Task<IActionResult> Create([FromRoute] int StokeId,[FromBody] Creat
       return Ok(comment.ToCommentDto());
     }
     [HttpDelete]
-    [Route("{id}")]
+    [Route("{id:int}")]
     public async Task<IActionResult> DeleteComment([FromRoute] int id)
     {
       var commentModel = await _commentRepo.DeleteCommentAsync(id);
