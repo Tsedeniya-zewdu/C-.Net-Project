@@ -1,6 +1,3 @@
-
-using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -19,50 +16,34 @@ namespace Infrastructure.Security
         public TokenService(IConfiguration config)
         {
             _config = config;
-
-            _key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(
-                    _config["Jwt:SigningKey"]!
-                )
-            );
+            _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:SigningKey"]!));
         }
 
-        public string CreateToken(AppUser user)
+        public string CreateToken(AppUser user, IEnumerable<string> roles)
         {
-            // 1. Create claims
             var claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Email, user.Email!),
-                new Claim(JwtRegisteredClaimNames.Name, user.UserName!)
+                // "sub" = the user's id. Controllers read it to know who is calling,
+                // so they no longer need to look the user up by name.
+                new(JwtRegisteredClaimNames.Sub, user.Id),
+                new(JwtRegisteredClaimNames.Email, user.Email!),
+                new(JwtRegisteredClaimNames.Name, user.UserName!)
             };
 
-            // 2. Create signing credentials
-            var credentials = new SigningCredentials(
-                _key,
-                SecurityAlgorithms.HmacSha512Signature
-            );
+            // One claim per role, so [Authorize(Roles = "Admin")] works.
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
-            // 3. Create token descriptor
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-
                 Expires = DateTime.UtcNow.AddDays(7),
-
                 Issuer = _config["Jwt:Issuer"],
-
                 Audience = _config["Jwt:Audience"],
-
-                SigningCredentials = credentials
+                SigningCredentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature)
             };
 
-            // 4. Generate token
             var tokenHandler = new JwtSecurityTokenHandler();
-
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-
-            // 5. Return token as string
-            return tokenHandler.WriteToken(token);
+            return tokenHandler.WriteToken(tokenHandler.CreateToken(tokenDescriptor));
         }
     }
 }

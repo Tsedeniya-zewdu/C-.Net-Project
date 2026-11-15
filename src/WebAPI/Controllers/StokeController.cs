@@ -1,106 +1,91 @@
-
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Application.Dtos.Stoke;
-using Domain.Interfaces;
-using Application.Mappers;
-using Microsoft.AspNetCore.Mvc;
+using Application.Stokes;
+using Application.Stokes.Create;
+using Application.Stokes.Delete;
+using Application.Stokes.GetAll;
+using Application.Stokes.GetById;
+using Application.Stokes.Update;
 using Domain.Filters;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using WebAPI.Contracts.Stokes;
 
 namespace WebAPI.Controllers
 {
+    // Thin controller: turn the HTTP request into a command or query, send it
+    // through MediatR, and turn the result into an HTTP response. Nothing else.
+    // Validation errors and "not found" are handled by ValidationBehavior and
+    // GlobalExceptionHandler, so there are no if/else checks here.
     [Route("api/stoke")]
     [ApiController]
-    public class StokeController : ControllerBase
+    public class StokeController(IMediator mediator) : ControllerBase
     {
-        private readonly IStokeRepository _StokeRepo;
-
-        public StokeController(IStokeRepository StokeRepo)
-        {
-            _StokeRepo = StokeRepo;
-        }
-
-        // GET ALL
         [HttpGet]
         [Authorize]
-        public async Task<IActionResult> GetAll([FromQuery] QueryObjects query)
+        [ProducesResponseType(typeof(List<StokeDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAll([FromQuery] QueryObjects query, CancellationToken ct)
         {
-            var stokes = await _StokeRepo.GetAllAsync(query);
-
-            var stokesDto = stokes.Select(s => s.ToStokeDto()).ToList();
-
-            return Ok(stokesDto);
+            var stokes = await mediator.Send(new GetAllStokesQuery(query), ct);
+            return Ok(stokes);
         }
 
-        // GET BY ID
         [HttpGet("{stokeId:int}")]
-        public async Task<IActionResult> GetById([FromRoute] int stokeId)
+        [ProducesResponseType(typeof(StokeDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetById([FromRoute] int stokeId, CancellationToken ct)
         {
-            var stoke = await _StokeRepo.GetByIdAsync(stokeId);
-
-            if (stoke == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(stoke.ToStokeDto());
+            var stoke = await mediator.Send(new GetStokeByIdQuery(stokeId), ct);
+            return Ok(stoke);
         }
 
-        // CREATE
         [HttpPost]
-        public async Task<IActionResult> Create(
-            [FromBody] CreateStokerequestDto StokeDto)
+        [ProducesResponseType(typeof(StokeDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> Create([FromBody] CreateStokeRequest request, CancellationToken ct)
         {
-            if (!ModelState.IsValid)
-      
-        return BadRequest(ModelState);
-            var StokeModel = StokeDto.ToStokeFromCreateDto();
+            var command = new CreateStokeCommand
+            {
+                Symbol = request.Symbol,
+                CompanyName = request.CompanyName,
+                Purchase = request.Purchase,
+                LastDiv = request.LastDiv,
+                Industry = request.Industry,
+                MarketCap = request.MarketCap
+            };
 
-            await _StokeRepo.CreateAsync(StokeModel);
-
-            return CreatedAtAction(
-                nameof(GetById),
-                new { stokeId = StokeModel.StokeId },
-                StokeModel.ToStokeDto()
-            );
+            var stoke = await mediator.Send(command, ct);
+            return CreatedAtAction(nameof(GetById), new { stokeId = stoke.StokeId }, stoke);
         }
 
-        // UPDATE
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> Update(
-            [FromRoute] int id,
-            [FromBody] UpdateStokeRequestDto updateDto)
+        [ProducesResponseType(typeof(StokeDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateStokeRequest request, CancellationToken ct)
         {
-            if (!ModelState.IsValid)
-      
-        return BadRequest(ModelState);
-            var stokeModel = await _StokeRepo.GetByIdAsync(id);
-
-            if (stokeModel == null)
+            var command = new UpdateStokeCommand
             {
-                return NotFound();
-            }
+                StokeId = id,
+                Symbol = request.Symbol,
+                CompanyName = request.CompanyName,
+                Purchase = request.Purchase,
+                LastDiv = request.LastDiv,
+                Industry = request.Industry,
+                MarketCap = request.MarketCap
+            };
 
-            stokeModel.UpdateFromDto(updateDto);
-            await _StokeRepo.UpdateAsync(stokeModel);
-
-            return Ok(stokeModel.ToStokeDto());
+            var stoke = await mediator.Send(command, ct);
+            return Ok(stoke);
         }
 
-        // DELETE
         [HttpDelete("{id:int}")]
-        public async Task<IActionResult> Delete([FromRoute] int id)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete([FromRoute] int id, CancellationToken ct)
         {
-            var stokeModel = await _StokeRepo.DeleteAsync(id);
-
-            if (stokeModel == null)
-            {
-                return NotFound();
-            }
-
+            await mediator.Send(new DeleteStokeCommand(id), ct);
             return NoContent();
         }
     }

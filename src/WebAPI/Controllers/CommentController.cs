@@ -1,101 +1,85 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Threading.Tasks;
-using Application.Dtos.Comment;
-using WebAPI.Extensions;
-using Domain.Interfaces;
-using Application.Mappers;
-using Domain.Entities;
-using Microsoft.AspNetCore.Identity;
+using Application.Comments;
+using Application.Comments.Create;
+using Application.Comments.Delete;
+using Application.Comments.GetAll;
+using Application.Comments.GetById;
+using Application.Comments.Update;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Contracts.Comments;
+using WebAPI.Extensions;
 
 namespace WebAPI.Controllers
 {
     [Route("api/comment")]
     [ApiController]
-    public class CommentController:ControllerBase
+    public class CommentController(IMediator mediator) : ControllerBase
     {
-        private readonly IcommentRepository _commentRepo;
-         private readonly IStokeRepository _stokeRepo;
-         private readonly UserManager<AppUser> _userManager;
-      public CommentController(IcommentRepository commentRepo, IStokeRepository stokeRepo, UserManager<AppUser> userManager)
-      {
-        _commentRepo=commentRepo;
-        _stokeRepo=stokeRepo;
-        _userManager=userManager;
-      } 
-      [HttpGet]
-
-      public async Task<IActionResult> GetAll()
-
+        [HttpGet]
+        [ProducesResponseType(typeof(List<CommentDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetAll(CancellationToken ct)
         {
-      
-      
-            var comments = await _commentRepo.GetAllAsync();
-            var commentDto = comments.Select(s=>s.ToCommentDto());
-            return Ok(commentDto);
+            var comments = await mediator.Send(new GetAllCommentsQuery(), ct);
+            return Ok(comments);
         }
 
         [HttpGet("{id:int}")]
-        public async Task<IActionResult> GetById([FromRoute] int id)
-    {
-      var comment = await _commentRepo.GetByIdAsync(id);
-      if(comment == null)
-      {
-        return NotFound();
-      }
-      return Ok(comment.ToCommentDto());
-    }
-[HttpPost("{StokeId:int}")]
-public async Task<IActionResult> Create([FromRoute] int StokeId,[FromBody] CreateCommentDto commentDto)
-    {
-      if (!ModelState.IsValid)
-      
-        return BadRequest(ModelState);
-      if(!await _stokeRepo.StokeExists(StokeId))
-      {
-        return BadRequest("stoke does not exist");
-      }
+        [ProducesResponseType(typeof(CommentDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetById([FromRoute] int id, CancellationToken ct)
+        {
+            var comment = await mediator.Send(new GetCommentByIdQuery(id), ct);
+            return Ok(comment);
+        }
 
-      var username = User.GetUserName();
-      var appUser = await _userManager.FindByNameAsync(username);
-  
+        [HttpPost("{stokeId:int}")]
+        [Authorize]
+        [ProducesResponseType(typeof(CommentDto), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Create([FromRoute] int stokeId, [FromBody] CreateCommentRequest request, CancellationToken ct)
+        {
+            var command = new CreateCommentCommand
+            {
+                StokeId = stokeId,
+                UserId = User.GetUserId(),
+                Title = request.Title,
+                Content = request.Content
+            };
 
-      var commentModel =commentDto.ToCommentFromCreate(StokeId);
-      commentModel.AppUserId=appUser.Id;
-      await _commentRepo.CreateAsync(commentModel);
-       return CreatedAtAction(
-                nameof(GetById),
-                new { id = commentModel.Id },
-                commentModel.ToCommentDto()
-            );
-    }
-    [HttpPut]
-    [Route("{id:int}")]
-    public async Task<IActionResult> UpdateComment([FromRoute] int id, UpdateCommentRequestDto updatedto)
-    {
-      if (!ModelState.IsValid)
-      
-        return BadRequest(ModelState);
-      var comment = await _commentRepo.UpdateAsync(id,updatedto.ToCommentFromUpate() );
-      if (comment == null)
-      {
-        return NotFound("comment not found");
-      }
-      return Ok(comment.ToCommentDto());
-    }
-    [HttpDelete]
-    [Route("{id:int}")]
-    public async Task<IActionResult> DeleteComment([FromRoute] int id)
-    {
-      var commentModel = await _commentRepo.DeleteCommentAsync(id);
-      if(commentModel == null)
-      {
-        return NotFound("comment does not exist");
-      }
-return Ok(commentModel);
-    }
+            var comment = await mediator.Send(command, ct);
+            return CreatedAtAction(nameof(GetById), new { id = comment.Id }, comment);
+        }
+
+        [HttpPut("{id:int}")]
+        [Authorize]
+        [ProducesResponseType(typeof(CommentDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] UpdateCommentRequest request, CancellationToken ct)
+        {
+            var command = new UpdateCommentCommand
+            {
+                CommentId = id,
+                UserId = User.GetUserId(),
+                Title = request.Title,
+                Content = request.Content
+            };
+
+            var comment = await mediator.Send(command, ct);
+            return Ok(comment);
+        }
+
+        [HttpDelete("{id:int}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Delete([FromRoute] int id, CancellationToken ct)
+        {
+            await mediator.Send(new DeleteCommentCommand(id, User.GetUserId()), ct);
+            return NoContent();
+        }
     }
 }

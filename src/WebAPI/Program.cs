@@ -23,6 +23,9 @@ await app.Services.SeedRolesAsync();
 // --------------------------
 // 3. Middleware pipeline
 // --------------------------
+// First in the pipeline, so it catches exceptions from everything after it.
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

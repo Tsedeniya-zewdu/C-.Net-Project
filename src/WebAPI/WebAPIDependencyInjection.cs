@@ -2,6 +2,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using WebAPI.Middleware;
 
 namespace WebAPI
 {
@@ -18,6 +19,10 @@ namespace WebAPI
                 options.SerializerSettings.ReferenceLoopHandling =
                     Newtonsoft.Json.ReferenceLoopHandling.Ignore;
             });
+
+            // Turns exceptions from handlers into 400/401/403/404/409/500 responses.
+            services.AddExceptionHandler<GlobalExceptionHandler>();
+            services.AddProblemDetails();
 
             services.AddJwtAuthentication(configuration);
             services.AddSwagger();

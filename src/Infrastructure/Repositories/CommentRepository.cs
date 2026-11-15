@@ -1,66 +1,28 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Infrastructure.Data;
-using Domain.Interfaces;
 using Domain.Entities;
+using Domain.Interfaces;
+using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repositories
 {
-    public class CommentRepository : IcommentRepository
+    public class CommentRepository(ApplicationDBContext context) : ICommentRepository
     {
-        private readonly ApplicationDBContext _context;
-        public CommentRepository(ApplicationDBContext context)
-        {
-            _context = context;
-        }
+        public Task<List<Comment>> GetAllAsync(CancellationToken ct = default)
+            => context.Comment
+                .AsNoTracking()
+                .Include(c => c.AppUser)
+                .OrderBy(c => c.Id)
+                .ToListAsync(ct);
 
-        public async Task<Comment> CreateAsync(Comment commentModel)
-        {
-            await _context.Comment.AddAsync(commentModel);
-            await _context.SaveChangesAsync();
-            return commentModel;
-        }
+        // Tracked (no AsNoTracking) because update and delete handlers change the result.
+        public Task<Comment?> GetByIdAsync(int id, CancellationToken ct = default)
+            => context.Comment
+                .Include(c => c.AppUser)
+                .FirstOrDefaultAsync(c => c.Id == id, ct);
 
-        public async Task<Comment?> DeleteCommentAsync(int id)
-        {
-            var commentModel= await _context.Comment.FirstOrDefaultAsync(i => i.Id==id);
-            if (commentModel==null)
-            {
-                return null;
-            }
-            _context.Comment.Remove(commentModel);
-            await _context.SaveChangesAsync();
-            return commentModel;
-             
-        }
+        public async Task AddAsync(Comment comment, CancellationToken ct = default)
+            => await context.Comment.AddAsync(comment, ct);
 
-        public async Task<List<Comment>> GetAllAsync()
-        {
-            return await _context.Comment.Include(a=> a.AppUser).ToListAsync();
-        }
-
-        public async Task<Comment?> GetByIdAsync(int id)
-        {
-            return await _context.Comment.Include(a=> a.AppUser).FirstOrDefaultAsync(c => c.Id == id);
-        }
-
-        public async Task<Comment?> UpdateAsync(int id, Comment commentModel)
-        {
-            var existingComment = await _context.Comment.FindAsync(id);
-
-            if (existingComment == null)
-            {
-                return null;
-            }
-            
-            existingComment.Title=commentModel.Title;
-            existingComment.Content=commentModel.Content;
-            await _context.SaveChangesAsync();
-            return existingComment;
-        }
-
+        public void Remove(Comment comment) => context.Comment.Remove(comment);
     }
 }

@@ -1,86 +1,45 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using WebAPI.Extensions;
-using Domain.Interfaces;
-using Domain.Entities;
+using Application.Portfolios.Add;
+using Application.Portfolios.GetUserPortfolio;
+using Application.Portfolios.Remove;
+using Application.Stokes;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using WebAPI.Extensions;
 
 namespace WebAPI.Controllers
 {
-
-    [Route("api/Portfoio")]
+    // [Authorize] on the class applies to every action.
+    [Route("api/portfolio")]
     [ApiController]
-    public class PortfolioController : ControllerBase
+    [Authorize]
+    public class PortfolioController(IMediator mediator) : ControllerBase
     {
-        private readonly UserManager<AppUser> _userManager;
-        private readonly IStokeRepository _stokeRepo;
-        private readonly IPortfolioRepository _portfolioRepo;
-        public PortfolioController(UserManager<AppUser> userManager, IStokeRepository stokeRepo, IPortfolioRepository portfolioRepo)
-        {
-            _userManager = userManager;
-            _stokeRepo = stokeRepo;
-            _portfolioRepo = portfolioRepo;
-        }
-
         [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> GetUserPortfoio()
+        [ProducesResponseType(typeof(List<StokeDto>), StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetUserPortfolio(CancellationToken ct)
         {
-            var username = User.GetUserName();
-            var appUser = await _userManager.FindByNameAsync(username);
-            var userPortfolio = await _portfolioRepo.GetUserPortfolio(appUser);
-            return Ok(userPortfolio);
+            var stokes = await mediator.Send(new GetUserPortfolioQuery(User.GetUserId()), ct);
+            return Ok(stokes);
         }
+
         [HttpPost]
-        [Authorize]
-        public async Task<IActionResult> AddPortfolio(string symbol)
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<IActionResult> Add([FromQuery] string symbol, CancellationToken ct)
         {
-            var username = User.GetUserName();
-            var appUser = await _userManager.FindByNameAsync(username);
-            var Stoke = await _stokeRepo.GetBySymbolAsync(symbol);
-
-            if (Stoke == null) return BadRequest("Stock not found");
-            var userPortfolio = await _portfolioRepo.GetUserPortfolio(appUser);
-            if (userPortfolio.Any(e => e.Symbol.ToLower() == symbol.ToLower())) return BadRequest("Cannot add same stoke to portfolio");
-
-            var PortfolioModel = new Portfolio
-            {
-                StokeId = Stoke.StokeId,
-                AppUserId = appUser.Id
-            };
-            await _portfolioRepo.CreateAsyn(PortfolioModel);
-            if(PortfolioModel == null)
-            {
-                return StatusCode(500,"could not create");
-
-            }
-            else
-            {
-                return Created();
-            }
-
+            await mediator.Send(new AddToPortfolioCommand(User.GetUserId(), symbol), ct);
+            return Created();
         }
+
         [HttpDelete]
-        [Authorize]
-        public async Task<IActionResult> DeletePortfolio(string symbol)
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> Remove([FromQuery] string symbol, CancellationToken ct)
         {
-             var username = User.GetUserName();
-            var appUser = await _userManager.FindByNameAsync(username);
-            var userPortfolio = await _portfolioRepo.GetUserPortfolio(appUser);
-            var filteredStoke = userPortfolio.Where(s=> s.Symbol.ToLower() == symbol.ToLower()).ToList();
-            if(filteredStoke.Count() == 1)
-            {
-                await _portfolioRepo.DeletePortfolio(appUser,symbol);
-            }
-            else
-            {
-                return BadRequest("stock not found in you portfolio");
-            }
-            return Ok();
+            await mediator.Send(new RemoveFromPortfolioCommand(User.GetUserId(), symbol), ct);
+            return NoContent();
         }
     }
 }

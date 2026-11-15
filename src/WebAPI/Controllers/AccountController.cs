@@ -1,107 +1,33 @@
-
-using System;
-using Application.Dtos.Account;
-using Domain.Interfaces;
-using Application.Abstractions;
-using Domain.Entities;
-using Infrastructure.Security;
-using Microsoft.AspNetCore.Identity;
+using Application.Accounts;
+using Application.Accounts.Login;
+using Application.Accounts.Register;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using WebAPI.Contracts.Accounts;
 
 namespace WebAPI.Controllers
 {
     [Route("api/account")]
     [ApiController]
-    public class AccountController : ControllerBase
+    public class AccountController(IMediator mediator) : ControllerBase
     {
-        private readonly UserManager<AppUser> _userManager;
-        private readonly ITokenService _tokenservice;
-        private readonly SignInManager<AppUser> _signInManager;
-
-        public AccountController(UserManager<AppUser> userManager, ITokenService tokenservice, SignInManager<AppUser> signInManager)
-        {
-            _userManager = userManager;
-            _tokenservice = tokenservice;
-            _signInManager = signInManager;
-        }
-
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+        [ProducesResponseType(typeof(NewUserDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken ct)
         {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(ModelState);
-
-                // 1. Create a new user object
-                var appUser = new AppUser
-                {
-                    UserName = registerDto.UserName!,
-                    Email = registerDto.Email
-                };
-
-                // 2. Create the user and hash the password
-                var createdUser = await _userManager.CreateAsync(
-                    appUser,
-                    registerDto.Password!
-                );
-
-                // 3. Check whether user creation succeeded
-                if (!createdUser.Succeeded)
-                {
-                    return BadRequest(createdUser.Errors);
-                }
-
-                // 4. Assign the default User role
-                var roleResult = await _userManager.AddToRoleAsync(
-                    appUser,
-                    "User"
-                );
-
-                if (!roleResult.Succeeded)
-                {
-                    await _userManager.DeleteAsync(appUser);
-                    return BadRequest(roleResult.Errors);
-                }
-
-                // 5. Return success
-                return Ok(new NewUserDto
-                {
-            
-                    UserName = appUser.UserName,
-                    Email = appUser.Email,
-                    Token = _tokenservice.CreateToken(appUser)
-                });
-            }
-            catch (Exception ex)
-{
-    Console.WriteLine(ex.ToString());
-
-    return StatusCode(500, ex.Message);
-}
+            var user = await mediator.Send(
+                new RegisterCommand(request.UserName, request.Email, request.Password), ct);
+            return Ok(user);
         }
-        [HttpPost]
-        public async Task<IActionResult> Login(LoginDto loginDto)
+
+        [HttpPost("login")]
+        [ProducesResponseType(typeof(NewUserDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
         {
-            if (!ModelState.IsValid)
-                            return BadRequest(ModelState);
-            
-        var user = await _userManager.FindByNameAsync(loginDto.UserName);
-            if(user == null) return Unauthorized("Invalid Username");
-            var result = await _signInManager.CheckPasswordSignInAsync(user,loginDto.Password,false);
-            if (!result.Succeeded)
-            {
-                return Unauthorized("username not found or password incorrect");
-            }
-            return Ok(
-                new NewUserDto
-                {
-                    UserName = user.UserName,
-                    Email = user.Email,
-                    Token = _tokenservice.CreateToken(user)
-                }
-            );
+            var user = await mediator.Send(new LoginCommand(request.UserName, request.Password), ct);
+            return Ok(user);
         }
     }
 }

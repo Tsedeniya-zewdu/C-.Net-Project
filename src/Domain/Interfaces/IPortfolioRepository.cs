@@ -1,15 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Domain.Entities;
 
 namespace Domain.Interfaces
 {
     public interface IPortfolioRepository
     {
-        Task<List<Stoke>> GetUserPortfolio(AppUser user);
-        Task<Portfolio> CreateAsyn(Portfolio portfolio);
-Task<Portfolio> DeletePortfolio(AppUser appUser, string symbol);
+        Task<List<Stoke>> GetUserStokesAsync(string userId, CancellationToken ct = default);
+        Task<Portfolio?> GetAsync(string userId, int stokeId, CancellationToken ct = default);
+        Task AddAsync(Portfolio portfolio, CancellationToken ct = default);
+        void Remove(Portfolio portfolio);
     }
 }

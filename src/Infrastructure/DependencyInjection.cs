@@ -2,6 +2,7 @@ using Application.Abstractions;
 using Domain.Entities;
 using Domain.Interfaces;
 using Infrastructure.Data;
+using Infrastructure.Identity;
 using Infrastructure.Repositories;
 using Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
@@ -36,11 +37,13 @@ namespace Infrastructure
 
             // Repositories: Domain interface -> Infrastructure implementation
             services.AddScoped<IStokeRepository, StokeRepository>();
-            services.AddScoped<IcommentRepository, CommentRepository>();
+            services.AddScoped<ICommentRepository, CommentRepository>();
             services.AddScoped<IPortfolioRepository, PortfolioRepository>();
 
-            // Application abstraction -> Infrastructure implementation
+            // Application abstractions -> Infrastructure implementations
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IAuthService, AuthService>();
 
             return services;
         }
