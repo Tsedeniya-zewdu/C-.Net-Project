@@ -1,14 +1,15 @@
 
 using System;
-using api.Dtos.Account;
-using api.interfaces;
-using api.Models;
-using api.Service;
+using Application.Dtos.Account;
+using Domain.Interfaces;
+using Application.Abstractions;
+using Domain.Entities;
+using Infrastructure.Security;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Controllers
+namespace WebAPI.Controllers
 {
     [Route("api/account")]
     [ApiController]

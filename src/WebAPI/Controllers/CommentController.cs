@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
-using api.Dtos.Comment;
-using api.Extension;
-using api.interfaces;
-using api.Mappers;
-using api.Models;
+using Application.Dtos.Comment;
+using WebAPI.Extensions;
+using Domain.Interfaces;
+using Application.Mappers;
+using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace api.Controllers
+namespace WebAPI.Controllers
 {
     [Route("api/comment")]
     [ApiController]

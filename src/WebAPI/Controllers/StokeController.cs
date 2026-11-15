@@ -3,14 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Dtos.Stoke;
-using api.interfaces;
-using api.Mappers;
+using Application.Dtos.Stoke;
+using Domain.Interfaces;
+using Application.Mappers;
 using Microsoft.AspNetCore.Mvc;
-using api.Helpers;
+using Domain.Filters;
 using Microsoft.AspNetCore.Authorization;
 
-namespace api.Controllers
+namespace WebAPI.Controllers
 {
     [Route("api/stoke")]
     [ApiController]
@@ -77,12 +77,15 @@ namespace api.Controllers
             if (!ModelState.IsValid)
       
         return BadRequest(ModelState);
-            var stokeModel = await _StokeRepo.UpdateAsync(id, updateDto);
+            var stokeModel = await _StokeRepo.GetByIdAsync(id);
 
             if (stokeModel == null)
             {
                 return NotFound();
             }
+
+            stokeModel.UpdateFromDto(updateDto);
+            await _StokeRepo.UpdateAsync(stokeModel);
 
             return Ok(stokeModel.ToStokeDto());
         }

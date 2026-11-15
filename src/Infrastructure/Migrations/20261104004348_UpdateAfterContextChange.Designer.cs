@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using api.Data;
+using Infrastructure.Data;
 
 #nullable disable
 
-namespace api.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
     [Migration("20261104004348_UpdateAfterContextChange")]
@@ -25,7 +25,7 @@ namespace api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("api.Models.Comment", b =>
+            modelBuilder.Entity("Domain.Entities.Comment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -54,7 +54,7 @@ namespace api.Migrations
                     b.ToTable("Comment");
                 });
 
-            modelBuilder.Entity("api.Models.Stoke", b =>
+            modelBuilder.Entity("Domain.Entities.Stoke", b =>
                 {
                     b.Property<int>("StokeId")
                         .ValueGeneratedOnAdd()
@@ -88,9 +88,9 @@ namespace api.Migrations
                     b.ToTable("Stoke");
                 });
 
-            modelBuilder.Entity("api.Models.Comment", b =>
+            modelBuilder.Entity("Domain.Entities.Comment", b =>
                 {
-                    b.HasOne("api.Models.Stoke", "Stoke")
+                    b.HasOne("Domain.Entities.Stoke", "Stoke")
                         .WithMany()
                         .HasForeignKey("StokeId");
 

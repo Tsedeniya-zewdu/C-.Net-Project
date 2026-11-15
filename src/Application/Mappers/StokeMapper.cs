@@ -2,11 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Dtos.Stoke;
-using Npgsql.Replication;
-using api.Models;
+using Application.Dtos.Stoke;
+using Domain.Entities;
 
-namespace api.Mappers
+namespace Application.Mappers
 {
     public static class StokeMapper
     {
@@ -35,8 +34,19 @@ namespace api.Mappers
         LastDiv = createDto.LastDiv,
         Industry = createDto.Industry,
         MarketCap = createDto.MarketCap,
-        
+
     };
 }
+
+        // Copies the update request onto an existing entity (this used to live in the repository).
+        public static void UpdateFromDto(this Stoke stoke, UpdateStokeRequestDto dto)
+        {
+            stoke.Symbol = dto.Symbol;
+            stoke.CompanyName = dto.CompanyNAme;
+            stoke.Purchase = dto.Purchase;
+            stoke.LastDiv = dto.LastDiv;
+            stoke.Industry = dto.Industry;
+            stoke.MarketCap = dto.MarketCap;
+        }
     }
 }

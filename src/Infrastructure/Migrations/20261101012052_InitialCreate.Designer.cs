@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using api.Data;
+using Infrastructure.Data;
 
 #nullable disable
 
-namespace api.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDBContext))]
     [Migration("20261101012052_InitialCreate")]
@@ -24,7 +24,7 @@ namespace api.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("api.Models.Stoke", b =>
+            modelBuilder.Entity("Domain.Entities.Stoke", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()

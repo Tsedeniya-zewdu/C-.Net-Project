@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Extension;
-using api.interfaces;
-using api.Models;
+using WebAPI.Extensions;
+using Domain.Interfaces;
+using Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
-namespace api.Controllers
+namespace WebAPI.Controllers
 {
 
     [Route("api/Portfoio")]

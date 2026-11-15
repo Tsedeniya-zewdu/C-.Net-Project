@@ -1,9 +1,9 @@
 
 using System;
-using api.Dtos.Comment;
-using api.Models;
+using Application.Dtos.Comment;
+using Domain.Entities;
 
-namespace api.Mappers
+namespace Application.Mappers
 {
     public static class CommentMapper
     {

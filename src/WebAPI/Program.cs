@@ -1,14 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using api.Data;
-using api.interfaces;
-using api.Repository;
-using api.Models;
+using Infrastructure.Data;
+using Domain.Interfaces;
+using Application.Abstractions;
+using Infrastructure.Repositories;
+using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using api.Service;
+using Infrastructure.Security;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);

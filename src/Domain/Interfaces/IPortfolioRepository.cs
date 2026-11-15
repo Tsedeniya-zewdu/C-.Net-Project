@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Models;
+using Domain.Entities;
 
-namespace api.interfaces
+namespace Domain.Interfaces
 {
     public interface IPortfolioRepository
     {

@@ -3,14 +3,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Data;
-using api.Dtos.Stoke;
-using api.Helpers;
-using api.interfaces;
-using api.Models;
+using Infrastructure.Data;
+using Application.Dtos.Stoke;
+using Domain.Filters;
+using Domain.Interfaces;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Repository
+namespace Infrastructure.Repositories
 {
     public class StokeRepository : IStokeRepository
     {
@@ -70,31 +70,17 @@ namespace api.Repository
         // GET BY ID
         public async Task<Stoke?> GetByIdAsync(int id)
         {
-            return await _context.Stoke.Include(c => c.Comments).FirstOrDefaultAsync(i => i.StokeId == id);
+            return await _context.Stoke
+                .Include(c => c.Comments).ThenInclude(a => a.AppUser)
+                .FirstOrDefaultAsync(i => i.StokeId == id);
         }
 
         // UPDATE
-        public async Task<Stoke?> UpdateAsync(
-            int id,
-            UpdateStokeRequestDto stokeDto)
+        // The entity was loaded by this same DbContext, so EF already tracks the changes.
+        public async Task<Stoke> UpdateAsync(Stoke stoke)
         {
-            var existingStoke = await _context.Stoke
-                .FirstOrDefaultAsync(x => x.StokeId == id);
-
-            if (existingStoke == null)
-            {
-                return null;
-            }
-
-            existingStoke.Symbol = stokeDto.Symbol;
-            existingStoke.CompanyName = stokeDto.CompanyNAme;
-            existingStoke.Purchase = stokeDto.Purchase;
-            existingStoke.LastDiv = stokeDto.LastDiv;
-            existingStoke.Industry = stokeDto.Industry;
-
             await _context.SaveChangesAsync();
-
-            return existingStoke;
+            return stoke;
         }
 
         // DELETE

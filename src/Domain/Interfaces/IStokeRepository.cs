@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
-using api.Dtos.Stoke;
-using api.Helpers;
-using api.Models;
+using Domain.Filters;
+using Domain.Entities;
 
-namespace api.interfaces
+namespace Domain.Interfaces
 {
     public interface IStokeRepository
     {
@@ -15,7 +13,7 @@ namespace api.interfaces
         Task<Stoke?> GetByIdAsync(int id);
         Task<Stoke?> GetBySymbolAsync(string symbol);
         Task<Stoke> CreateAsync(Stoke stokeModel);
-        Task<Stoke?> UpdateAsync(int id,UpdateStokeRequestDto stokezdto);
+        Task<Stoke> UpdateAsync(Stoke stoke);
         Task<Stoke?> DeleteAsync(int id);
         Task<bool>StokeExists(int id);
     }

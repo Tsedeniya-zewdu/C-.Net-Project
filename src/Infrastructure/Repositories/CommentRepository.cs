@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using api.Data;
-using api.interfaces;
-using api.Models;
+using Infrastructure.Data;
+using Domain.Interfaces;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace api.Repository
+namespace Infrastructure.Repositories
 {
     public class CommentRepository : IcommentRepository
     {

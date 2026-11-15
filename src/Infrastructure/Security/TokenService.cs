@@ -4,12 +4,12 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using api.interfaces;
-using api.Models;
+using Application.Abstractions;
+using Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
-namespace api.Service
+namespace Infrastructure.Security
 {
     public class TokenService : ITokenService
     {
